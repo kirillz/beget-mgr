@@ -1,66 +1,128 @@
 package ui
 
 import (
+	"errors"
+	"os"
+	"path/filepath"
+
 	"fyne.io/fyne/v2"
-	appearance "fyne.io/fyne/v2/cmd/fyne_settings/settings"
+	//appearance "fyne.io/fyne/v2/cmd/fyne_settings/settings"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"github.com/kirillz/beget-mgr/v2/internal/util"
 )
 
+type Client struct {
+	app fyne.App
+
+	// Notification holds the settings value for if we have notifications enabled or not.
+	Notifications bool
+
+	// OverwriteExisting holds the settings value for if we should overwrite already existing files.
+	OverwriteExisting bool
+
+	// DownloadPath holds the download path used for saving received files.
+	DownloadPath string
+}
+
 type settings struct {
-	componentSlider     *widget.Slider
-	componentLabel      *widget.Label
-	verifyRadio         *widget.RadioGroup
-	appID               *widget.Entry
-	rendezvousURL       *widget.Entry
-	transitRelayAddress *widget.Entry
+	downloadPathEntry *widget.Entry
 
-	window fyne.Window
-	app    fyne.App
+	client      *Client
+	preferences fyne.Preferences
+	window      fyne.Window
+	app         fyne.App
 }
 
-func newSettings(a fyne.App, w fyne.Window) *settings {
-	return &settings{app: a, window: w}
+// NewClient returns a new client
+func NewClient(app fyne.App) *Client {
+	return &Client{app: app}
 }
 
-func (s *settings) onComponentsChange(value float64) {
+func newSettings(a fyne.App, w fyne.Window, c *Client) *settings {
+	return &settings{app: a, window: w, client: c, preferences: a.Preferences()}
+}
 
-	s.componentLabel.SetText(string('0' + byte(value)))
+func (s *settings) onDownloadsPathSubmitted(path string) {
+	path = filepath.Clean(path)
+	info, err := os.Stat(path)
+	if errors.Is(err, os.ErrNotExist) {
+		dialog.ShowInformation("Не существует", "Пожалуйста укажите существующий каталог.", s.window)
+		return
+	} else if err != nil {
+		fyne.LogError("Ошибка проверки каталога", err)
+		dialog.ShowError(err, s.window)
+		return
+	} else if !info.IsDir() {
+		dialog.ShowInformation("Не является каталогом", "Please select a valid directory.", s.window)
+		return
+	}
+
+	s.client.DownloadPath = path
+	s.preferences.SetString("DownloadPath", s.client.DownloadPath)
+	s.downloadPathEntry.SetText(s.client.DownloadPath)
+}
+
+func (s *settings) onDownloadsPathSelected() {
+	folder := dialog.NewFolderOpen(func(folder fyne.ListableURI, err error) {
+		if err != nil {
+			fyne.LogError("Ошибка при выборе каталога", err)
+			dialog.ShowError(err, s.window)
+			return
+		} else if folder == nil {
+			return
+		}
+
+		s.client.DownloadPath = folder.Path()
+		s.preferences.SetString("DownloadPath", s.client.DownloadPath)
+		s.downloadPathEntry.SetText(s.client.DownloadPath)
+	}, s.window)
+
+	folder.Resize(util.WindowSizeToDialog(s.window.Canvas().Size()))
+	folder.Show()
+}
+
+// getPreferences is used to set the preferences on startup without saving at the same time.
+func (s *settings) getPreferences() {
+	s.client.DownloadPath = s.preferences.StringWithFallback("DownloadPath", util.UserDownloadsFolder())
+	s.downloadPathEntry.Text = s.client.DownloadPath
+
 }
 
 func (s *settings) buildUI() *container.Scroll {
-	onOffOptions := []string{"On", "Off"}
 
-	s.componentSlider, s.componentLabel = &widget.Slider{Min: 2.0, Max: 6.0, Step: 1, OnChanged: s.onComponentsChange}, &widget.Label{}
+	pathSelector := &widget.Button{Icon: theme.FolderOpenIcon(), Importance: widget.LowImportance, OnTapped: s.onDownloadsPathSelected}
+	s.downloadPathEntry = &widget.Entry{Wrapping: fyne.TextWrapWord, OnSubmitted: s.onDownloadsPathSubmitted, ActionItem: pathSelector}
 
-	s.verifyRadio = &widget.RadioGroup{Options: onOffOptions, Horizontal: true, Required: true}
+	s.getPreferences()
 
-	interfaceContainer := appearance.NewSettings().LoadAppearanceScreen(s.window)
+	//interfaceContainer := appearance.NewSettings().LoadAppearanceScreen(s.window)
 
-	wormholeContainer := container.NewVBox(
+	dataContainer := container.NewGridWithColumns(2,
+		newBoldLabel("Сохранить файл в:"), s.downloadPathEntry,
+	)
+
+	otherContainer := container.NewVBox(
 		container.NewGridWithColumns(2,
-			newBoldLabel("Verify before accepting"), s.verifyRadio,
+
 			newBoldLabel("Passphrase length"),
-			container.NewBorder(nil, nil, nil, s.componentLabel, s.componentSlider),
 		),
 		&widget.Accordion{Items: []*widget.AccordionItem{
-			{Title: "Advanced", Detail: container.NewGridWithColumns(2,
-				newBoldLabel("AppID"), s.appID,
-				newBoldLabel("Rendezvous URL"), s.rendezvousURL,
-				newBoldLabel("Transit Relay Address"), s.transitRelayAddress,
-			)},
+			{Title: "Продвинутые настройки", Detail: container.NewGridWithColumns(2)},
 		}},
 	)
 
 	return container.NewScroll(container.NewVBox(
-		&widget.Card{Title: "User Interface", Content: interfaceContainer},
-		&widget.Card{Title: "Wormhole Options", Content: wormholeContainer},
+		//&widget.Card{Title: "User Interface", Content: interfaceContainer},
+		&widget.Card{Title: "Данные", Content: dataContainer},
+		&widget.Card{Title: "Другие настройки", Content: otherContainer},
 	))
 }
 
 func (s *settings) tabItem() *container.TabItem {
-	return &container.TabItem{Text: "Settings", Icon: theme.SettingsIcon(), Content: s.buildUI()}
+	return &container.TabItem{Text: "Настройки", Icon: theme.SettingsIcon(), Content: s.buildUI()}
 }
 
 func newBoldLabel(text string) *widget.Label {

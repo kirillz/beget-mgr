@@ -2,6 +2,7 @@ Website = "https://revive-it.ru/"
 
 [Details]
   Icon = "internal/assets/icon/icon-16x16.png"
+  ID = "io.github.kirillz.beget-mgr"
   Name = "beget-mgr"
   Version = "0.0.1"
-  Build = 1
+  Build = 21

@@ -8,9 +8,10 @@ import (
 
 // Create will set up and create the ui components.
 func Create(app fyne.App, window fyne.Window) *container.AppTabs {
+	client := NewClient(app)
 
 	return &container.AppTabs{Items: []*container.TabItem{
-		newSettings(app, window).tabItem(),
-		newAccounts(app, window).tabItem(),
+		newSettings(app, window, client).tabItem(),
+		newAccounts(app, window, client).tabItem(),
 	}}
 }
