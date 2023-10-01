@@ -1,0 +1,7 @@
+Website = "https://revive-it.ru/"
+
+[Details]
+  Icon = "internal/assets/icon/icon-16x16.png"
+  Name = "beget-mgr"
+  Version = "0.0.1"
+  Build = 1
