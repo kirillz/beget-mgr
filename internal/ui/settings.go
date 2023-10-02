@@ -14,19 +14,6 @@ import (
 	"github.com/kirillz/beget-mgr/v2/internal/util"
 )
 
-type Client struct {
-	app fyne.App
-
-	// Notification holds the settings value for if we have notifications enabled or not.
-	Notifications bool
-
-	// OverwriteExisting holds the settings value for if we should overwrite already existing files.
-	OverwriteExisting bool
-
-	// DownloadPath holds the download path used for saving received files.
-	DownloadPath string
-}
-
 type settings struct {
 	downloadPathEntry *widget.Entry
 
@@ -101,13 +88,13 @@ func (s *settings) buildUI() *container.Scroll {
 	//interfaceContainer := appearance.NewSettings().LoadAppearanceScreen(s.window)
 
 	dataContainer := container.NewGridWithColumns(2,
-		newBoldLabel("Сохранить файл в:"), s.downloadPathEntry,
+		util.NewBoldLabel("Сохранить файл в:"), s.downloadPathEntry,
 	)
 
 	otherContainer := container.NewVBox(
 		container.NewGridWithColumns(2,
 
-			newBoldLabel("Passphrase length"),
+			util.NewBoldLabel("Passphrase length"),
 		),
 		&widget.Accordion{Items: []*widget.AccordionItem{
 			{Title: "Продвинутые настройки", Detail: container.NewGridWithColumns(2)},
@@ -123,8 +110,4 @@ func (s *settings) buildUI() *container.Scroll {
 
 func (s *settings) tabItem() *container.TabItem {
 	return &container.TabItem{Text: "Настройки", Icon: theme.SettingsIcon(), Content: s.buildUI()}
-}
-
-func newBoldLabel(text string) *widget.Label {
-	return &widget.Label{Text: text, TextStyle: fyne.TextStyle{Bold: true}}
 }

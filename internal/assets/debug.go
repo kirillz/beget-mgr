@@ -7,7 +7,7 @@ import (
 	"fyne.io/fyne/v2"
 )
 
-//go:embed icon/icon-16x16.png
+//go:embed icon/icon-512x512.png
 var iconData []byte
 
 // SetIcon sets the icon because it is not bundled automatically.

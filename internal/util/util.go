@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/widget"
 )
 
 // UserDownloadsFolder returns the downloads folder corresponding to the current user.
@@ -21,4 +22,12 @@ func UserDownloadsFolder() string {
 // WindowSizeToDialog scales the window size to a suitable dialog size.
 func WindowSizeToDialog(s fyne.Size) fyne.Size {
 	return fyne.NewSize(s.Width*0.8, s.Height*0.8)
+}
+
+func NewBoldLabel(text string) *widget.Label {
+	return &widget.Label{Text: text, TextStyle: fyne.TextStyle{Bold: true}}
+}
+
+func NewLabel(text string) *widget.Label {
+	return &widget.Label{Text: text, TextStyle: fyne.TextStyle{Bold: false}}
 }

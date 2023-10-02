@@ -58,7 +58,7 @@ func (s *accounts) buildUI() *fyne.Container {
 			return len(names), len(data[kx]) + 1
 		},
 		func() fyne.CanvasObject {
-			return widget.NewLabel("Default text")
+			return widget.NewLabel("Default")
 		},
 		func(tci widget.TableCellID, co fyne.CanvasObject) {
 			if tci.Col == 0 {
@@ -68,6 +68,8 @@ func (s *accounts) buildUI() *fyne.Container {
 			}
 		},
 	)
+
+	// Form
 
 	// s.fileChoice = &widget.Button{Text: "Файл", Icon: theme.FileIcon(), OnTapped: s.onFileSend}
 	// s.directoryChoice = &widget.Button{Text: "Каталог", Icon: theme.FolderOpenIcon(), OnTapped: s.onDirSend}
